@@ -167,24 +167,24 @@ func (c *Conn) Publish(queue string, routingKey string, body []byte, pubType str
 	return strconv.ParseInt(string(np.GetMsgid()), 10, 64)
 }
 
-func (c *Conn) Bind(queue string, routingKey string, noAck bool) (*Channel, error) {
+func (c *Conn) Bind(queue string, routingKey string, ack bool) (*Channel, error) {
 	c.Lock()
 	defer c.Unlock()
 
 	ch, ok := c.channels[queue]
 	if !ok {
-		ch = newChannel(c, queue, routingKey, noAck)
+		ch = newChannel(c, queue, routingKey, ack)
 		c.channels[queue] = ch
 	} else {
 		ch.routingKey = routingKey
-		ch.noAck = noAck
+		ch.ack = ack
 	}
 
 	p := &pb.Protocol{
 		Method:     proto.String(pb.Bind),
 		RoutingKey: proto.String(routingKey),
 		Queue:      proto.String(queue),
-		Ack:        proto.Bool(noAck),
+		Ack:        proto.Bool(ack),
 	}
 
 	rp, err := c.request(p, pb.BindOK)
@@ -264,7 +264,7 @@ type Channel struct {
 	c          *Conn
 	queue      string
 	routingKey string
-	noAck      bool
+	ack        bool
 
 	msg    chan *channelMsg
 	closed bool
@@ -272,13 +272,13 @@ type Channel struct {
 	lastId string
 }
 
-func newChannel(c *Conn, queue string, routingKey string, noAck bool) *Channel {
+func newChannel(c *Conn, queue string, routingKey string, ack bool) *Channel {
 	ch := new(Channel)
 
 	ch.c = c
 	ch.queue = queue
 	ch.routingKey = routingKey
-	ch.noAck = noAck
+	ch.ack = ack
 
 	ch.msg = make(chan *channelMsg, c.cfg.MaxQueueSize)
 

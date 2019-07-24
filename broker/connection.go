@@ -214,7 +214,7 @@ func (p *connMsgPusher) Push(ch *channel, m *msg) error {
 
 	err := p.c.writeProtocol(np)
 
-	if err == nil && ch.noAck {
+	if err == nil && !ch.ack {
 		ch.Ack(m.id)
 	}
 
@@ -225,15 +225,15 @@ func (c *conn) handleBind(p *pb.Protocol) error {
 	queue := p.GetQueue()
 	routingKey := p.GetRoutingKey()
 
-	noAck := p.GetAck()
+	ack := p.GetAck()
 
 	ch, ok := c.channels[queue]
 	if !ok {
 		q := c.app.qs.Get(queue)
-		ch = newChannel(&connMsgPusher{c}, q, routingKey, noAck)
+		ch = newChannel(&connMsgPusher{c}, q, routingKey, ack)
 		c.channels[queue] = ch
 	} else {
-		ch.Reset(routingKey, noAck)
+		ch.Reset(routingKey, ack)
 	}
 
 	np := &pb.Protocol{
@@ -285,26 +285,26 @@ type channel struct {
 	p          msgPusher
 	q          *queue
 	routingKey string
-	noAck      bool
+	ack        bool
 }
 
-func newChannel(p msgPusher, q *queue, routingKey string, noAck bool) *channel {
+func newChannel(p msgPusher, q *queue, routingKey string, ack bool) *channel {
 	ch := new(channel)
 
 	ch.p = p
 	ch.q = q
 
 	ch.routingKey = routingKey
-	ch.noAck = noAck
+	ch.ack = ack
 
 	q.Bind(ch)
 
 	return ch
 }
 
-func (c *channel) Reset(routingKey string, noAck bool) {
+func (c *channel) Reset(routingKey string, ack bool) {
 	c.routingKey = routingKey
-	c.noAck = noAck
+	c.ack = ack
 }
 
 func (c *channel) Close() {

@@ -56,7 +56,6 @@ func (rq *queue) run() {
 			if rq.channels.Len() == 0 {
 				m, _ := rq.getMsg()
 				if m == nil {
-					//no conn, and no msg
 					rq.qs.Delete(rq.name)
 					return
 				}

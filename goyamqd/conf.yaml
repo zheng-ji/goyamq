@@ -1,0 +1,11 @@
+addr: 127.0.0.1:12345
+
+keep_alive: 60
+
+max_msg_size: 1024
+
+msg_timeout: 3600
+
+max_queue_size: 1024
+
+store: mem

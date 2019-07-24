@@ -46,6 +46,7 @@ func parseConfigFile(filepath string) (*BrokerConfig, error) {
 			return nil, err
 		}
 
+		fmt.Printf("config:%v", brokerConfig)
 		return brokerConfig, nil
 
 	} else {

@@ -64,7 +64,6 @@ func (c *conn) onRead() {
 	buf := make([]byte, 1024)
 	for {
 
-		//buf := make([]byte, 1024)
 		length, err := c.c.Read(buf)
 		p := &pb.Protocol{}
 		err = proto.Unmarshal(buf[0:length], p)
@@ -84,19 +83,14 @@ func (c *conn) onRead() {
 		}
 
 		switch p.GetMethod() {
-		//case "Publish":
 		case pb.Publish:
 			err = c.handlePublish(p)
-		//case "Bind":
 		case pb.Bind:
 			err = c.handleBind(p)
-		//case "UnBind":
 		case pb.UnBind:
 			err = c.handleUnbind(p)
-		//case "Ack":
 		case pb.Ack:
 			err = c.handleAck(p)
-		//case "HeartBeat":
 		case pb.HeartBeat:
 			c.lastUpdate = time.Now().Unix()
 		default:
@@ -142,7 +136,6 @@ func (c *conn) writeProtocol(p *pb.Protocol) error {
 }
 
 func (app *App) saveMsg(queue string, routingKey string, tp string, message []byte) (*msg, error) {
-	//t, _ := protocol.PublishTypeMap[strings.ToLower(tp)]
 	var t uint8 = 0
 	if tp == pb.FanOut {
 		t = 1
@@ -184,7 +177,6 @@ func (c *conn) handlePublish(p *pb.Protocol) error {
 	q.Push(msg)
 
 	np := &pb.Protocol{
-		//Method: proto.String("PublishOK"),
 		Method: proto.String(pb.PublishOK),
 		Msgid:  proto.String(strconv.FormatInt(msg.id, 10)),
 	}
@@ -214,7 +206,6 @@ type connMsgPusher struct {
 
 func (p *connMsgPusher) Push(ch *channel, m *msg) error {
 	np := &pb.Protocol{
-		//Method: proto.String("Push"),
 		Method: proto.String(pb.Push),
 		Queue:  proto.String(ch.q.name),
 		Msgid:  proto.String(strconv.FormatInt(m.id, 10)),
@@ -246,7 +237,6 @@ func (c *conn) handleBind(p *pb.Protocol) error {
 	}
 
 	np := &pb.Protocol{
-		//Method: proto.String("BindOK"),
 		Method: proto.String(pb.BindOK),
 		Queue:  proto.String(queue),
 	}
@@ -262,7 +252,6 @@ func (c *conn) handleUnbind(p *pb.Protocol) error {
 		c.unBindAll()
 
 		np := &pb.Protocol{
-			//Method: proto.String("UnBindOK"),
 			Method: proto.String(pb.UnBindOK),
 			Queue:  proto.String(queue),
 		}
@@ -277,7 +266,6 @@ func (c *conn) handleUnbind(p *pb.Protocol) error {
 	}
 
 	np := &pb.Protocol{
-		//Method: proto.String("UnBindOK"),
 		Method: proto.String(pb.UnBindOK),
 		Queue:  proto.String(queue),
 	}

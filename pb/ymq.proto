@@ -1,0 +1,14 @@
+syntax = "proto2";
+package pb;
+
+message Protocol {
+    optional string method = 1;
+    optional string queue = 2;
+    optional string pub_type = 3;
+    optional string routing_key = 4;
+    optional string msgid = 5;
+    optional bool ack = 6;
+
+    optional string body = 10;
+}
+

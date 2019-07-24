@@ -11,10 +11,10 @@ const (
 	UnBindOK string = "UnBindOK"
 
 	Error     string = "Error"
-	Heartbeat string = "HeartBeat"
+	HeartBeat string = "HeartBeat"
 	Push      string = "Push"
 	Ack       string = "Ack"
 
-	FantOut string = "FanOut"
-	Direct  string = "Direct"
+	FanOut string = "FanOut"
+	Direct string = "Direct"
 )

@@ -18,7 +18,7 @@ type Conn struct {
 
 	client *Client
 
-	cfg *Config
+	cfg *ClientConfig
 
 	conn net.Conn
 

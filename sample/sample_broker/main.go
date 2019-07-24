@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"ymq/broker"
+	"goyamq/broker"
 )
 
 var addr = flag.String("addr", "127.0.0.1:11181", "broker listen address")

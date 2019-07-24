@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
-	"ymq/client"
+	"goyamq/client"
 )
 
 var addr = flag.String("addr", "127.0.0.1:11181", "moonmq listen address")
 var queue = flag.String("queue", "test_queue", "queue want to bind")
+var msg = flag.String("msg", "hello world", "msg to publish")
 
 func main() {
 	flag.Parse()
@@ -20,17 +21,8 @@ func main() {
 	}
 	defer c.Close()
 
-	var conn *client.Conn
-	conn, err = c.Get()
+	_, err = c.PublishFanout(*queue, []byte(*msg))
 	if err != nil {
 		panic(err)
 	}
-
-	defer conn.Close()
-
-	var ch *client.Channel
-	ch, err = conn.Bind(*queue, "", true)
-
-	msg := ch.GetMsg()
-	println("get msg: ", string(msg))
 }

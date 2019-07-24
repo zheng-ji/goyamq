@@ -1,13 +1,13 @@
 package broker
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 )
 
 type StoreDriver interface {
-	Open(configJson json.RawMessage) (Store, error)
+	//Open(configJson json.RawMessage) (Store, error)
+	Open(configStr string) (Store, error)
 }
 
 type Store interface {
@@ -32,13 +32,13 @@ func RegisterStore(name string, d StoreDriver) error {
 }
 
 //func OpenStore(name string, configJson json.RawMessage) (Store, error) {
-func OpenStore(name string, config string) (Store, error) {
+func OpenStore(name string, configStr string) (Store, error) {
 	d, ok := stores[name]
 	if !ok {
 		return nil, fmt.Errorf("%s has not been registered", name)
 	}
 
-	return d.Open(config)
+	return d.Open(configStr)
 }
 
 type MemStoreDriver struct {

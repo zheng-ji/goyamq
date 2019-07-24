@@ -2,7 +2,6 @@ package client
 
 import (
 	"container/list"
-	"encoding/json"
 	"goyamq/pb"
 	"sync"
 )

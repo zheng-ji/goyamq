@@ -5,7 +5,7 @@ import (
 	"goyamq/broker"
 )
 
-var addr = flag.String("addr", "127.0.0.1:11181", "broker listen address")
+var addr = flag.String("addr", "127.0.0.1:12345", "broker listen address")
 
 func main() {
 	flag.Parse()

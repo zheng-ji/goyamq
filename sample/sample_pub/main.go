@@ -5,7 +5,7 @@ import (
 	"goyamq/client"
 )
 
-var addr = flag.String("addr", "127.0.0.1:11181", "moonmq listen address")
+var addr = flag.String("addr", "127.0.0.1:12345", "broker listen address")
 var queue = flag.String("queue", "test_queue", "queue want to bind")
 var msg = flag.String("msg", "hello world", "msg to publish")
 

@@ -1,4 +1,6 @@
-使用 ProtoBuffer 实现的消息队列, 练习
+Yes, 这是一个轮子。 
+
+基于 ProtoBuffer 实现的消息队列
 
 ## TODO List
 - [x] 用 Yaml 做配置文件

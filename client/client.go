@@ -3,6 +3,7 @@ package client
 import (
 	"container/list"
 	"encoding/json"
+	"goyamq/pb"
 	"sync"
 )
 
@@ -74,7 +75,7 @@ func (c *Client) Publish(queue string, routingKey string, body []byte, pubType s
 }
 
 func (c *Client) PublishFanout(queue string, body []byte) (int64, error) {
-	return c.Publish(queue, "", body, "Fanout")
+	return c.Publish(queue, "", body, pb.FanOut)
 }
 
 func (c *Client) PublishDirect(queue string, routingKey string, body []byte) (int64, error) {

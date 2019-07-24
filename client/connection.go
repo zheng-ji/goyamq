@@ -86,7 +86,8 @@ func (c *Conn) run() {
 			return
 		}
 
-		if p.GetMethod() == "Push" {
+		//if p.GetMethod() == "Push" {
+		if p.GetMethod() == pb.Push {
 			queueName := p.GetQueue()
 			c.Lock()
 			ch, ok := c.channels[queueName]
@@ -116,7 +117,8 @@ func (c *Conn) request(p *pb.Protocol, expectMethod string) (*pb.Protocol, error
 		return nil, fmt.Errorf("wait channel closed")
 	}
 
-	if rp.GetMethod() == "Error" {
+	//if rp.GetMethod() == "Error" {
+	if rp.GetMethod() == pb.Error {
 		return nil, fmt.Errorf("error:%s", rp.GetBody())
 	}
 
@@ -149,7 +151,8 @@ func (c *Conn) writeProtocol(p *pb.Protocol) error {
 
 func (c *Conn) Publish(queue string, routingKey string, body []byte, pubType string) (int64, error) {
 	p := &pb.Protocol{
-		Method:     proto.String("Publish"),
+		//Method:     proto.String("Publish"),
+		Method:     proto.String(pb.Publish),
 		RoutingKey: proto.String(routingKey),
 		PubType:    proto.String(pubType),
 		Queue:      proto.String(queue),
@@ -159,7 +162,7 @@ func (c *Conn) Publish(queue string, routingKey string, body []byte, pubType str
 	c.Lock()
 	defer c.Unlock()
 
-	np, err := c.request(p, "PublishOK")
+	np, err := c.request(p, pb.PublishOK)
 	if err != nil {
 		return 0, err
 	}
@@ -184,13 +187,14 @@ func (c *Conn) Bind(queue string, routingKey string, noAck bool) (*Channel, erro
 	}
 
 	p := &pb.Protocol{
-		Method:     proto.String("Bind"),
+		//Method:     proto.String("Bind"),
+		Method:     proto.String(pb.Bind),
 		RoutingKey: proto.String(routingKey),
 		Queue:      proto.String(queue),
 		Ack:        proto.Bool(noAck),
 	}
 
-	rp, err := c.request(p, "BindOK")
+	rp, err := c.request(p, pb.BindOK)
 
 	if err != nil {
 		return nil, err
@@ -210,11 +214,12 @@ func (c *Conn) unbindAll() error {
 	c.channels = make(map[string]*Channel)
 
 	p := &pb.Protocol{
-		Method: proto.String("UnBind"),
+		//Method: proto.String("UnBind"),
+		Method: proto.String(pb.UnBind),
 		Queue:  proto.String(""),
 	}
 
-	_, err := c.request(p, "UnBindOK")
+	_, err := c.request(p, pb.UnBindOK)
 	return err
 }
 
@@ -230,11 +235,11 @@ func (c *Conn) unbind(queue string) error {
 	delete(c.channels, queue)
 
 	p := &pb.Protocol{
-		Method: proto.String("UnBind"),
+		Method: proto.String(pb.UnBind),
 		Queue:  proto.String(queue),
 	}
 
-	rp, err := c.request(p, "UnBindOK")
+	rp, err := c.request(p, pb.UnBindOK)
 	if err != nil {
 		return err
 	}
@@ -248,7 +253,8 @@ func (c *Conn) unbind(queue string) error {
 
 func (c *Conn) ack(queue string, msgId string) error {
 	p := &pb.Protocol{
-		Method: proto.String("Ack"),
+		//Method: proto.String("Ack"),
+		Method: proto.String(pb.Ack),
 		Queue:  proto.String(queue),
 		Msgid:  proto.String(msgId),
 	}

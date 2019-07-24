@@ -84,15 +84,20 @@ func (c *conn) onRead() {
 		}
 
 		switch p.GetMethod() {
-		case "Publish":
+		//case "Publish":
+		case pb.Publish:
 			err = c.handlePublish(p)
-		case "Bind":
+		//case "Bind":
+		case pb.Bind:
 			err = c.handleBind(p)
-		case "UnBind":
+		//case "UnBind":
+		case pb.UnBind:
 			err = c.handleUnbind(p)
-		case "Ack":
+		//case "Ack":
+		case pb.Ack:
 			err = c.handleAck(p)
-		case "HeartBeat":
+		//case "HeartBeat":
+		case pb.HeartBeat:
 			c.lastUpdate = time.Now().Unix()
 		default:
 			log.Info("invalid protocol method %s", p.GetMethod())
@@ -107,7 +112,7 @@ func (c *conn) onRead() {
 
 func (c *conn) writeError(err error) {
 	p := &pb.Protocol{
-		Method: proto.String("Error"),
+		Method: proto.String(pb.Error),
 		Body:   proto.String(err.Error()),
 	}
 
@@ -138,11 +143,9 @@ func (c *conn) writeProtocol(p *pb.Protocol) error {
 
 func (app *App) saveMsg(queue string, routingKey string, tp string, message []byte) (*msg, error) {
 	//t, _ := protocol.PublishTypeMap[strings.ToLower(tp)]
-	var t uint8
-	if tp == "Fanout" {
+	var t uint8 = 0
+	if tp == pb.FanOut {
 		t = 1
-	} else {
-		t = 0
 	}
 
 	if app.cfg.MaxQueueSize > 0 {
@@ -181,7 +184,8 @@ func (c *conn) handlePublish(p *pb.Protocol) error {
 	q.Push(msg)
 
 	np := &pb.Protocol{
-		Method: proto.String("PublishOK"),
+		//Method: proto.String("PublishOK"),
+		Method: proto.String(pb.PublishOK),
 		Msgid:  proto.String(strconv.FormatInt(msg.id, 10)),
 	}
 
@@ -210,7 +214,8 @@ type connMsgPusher struct {
 
 func (p *connMsgPusher) Push(ch *channel, m *msg) error {
 	np := &pb.Protocol{
-		Method: proto.String("Push"),
+		//Method: proto.String("Push"),
+		Method: proto.String(pb.Push),
 		Queue:  proto.String(ch.q.name),
 		Msgid:  proto.String(strconv.FormatInt(m.id, 10)),
 		Body:   proto.String(string(m.body)),
@@ -241,7 +246,8 @@ func (c *conn) handleBind(p *pb.Protocol) error {
 	}
 
 	np := &pb.Protocol{
-		Method: proto.String("BindOK"),
+		//Method: proto.String("BindOK"),
+		Method: proto.String(pb.BindOK),
 		Queue:  proto.String(queue),
 	}
 
@@ -256,7 +262,8 @@ func (c *conn) handleUnbind(p *pb.Protocol) error {
 		c.unBindAll()
 
 		np := &pb.Protocol{
-			Method: proto.String("UnBindOK"),
+			//Method: proto.String("UnBindOK"),
+			Method: proto.String(pb.UnBindOK),
 			Queue:  proto.String(queue),
 		}
 
@@ -270,7 +277,8 @@ func (c *conn) handleUnbind(p *pb.Protocol) error {
 	}
 
 	np := &pb.Protocol{
-		Method: proto.String("UnBindOK"),
+		//Method: proto.String("UnBindOK"),
+		Method: proto.String(pb.UnBindOK),
 		Queue:  proto.String(queue),
 	}
 

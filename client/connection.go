@@ -42,8 +42,6 @@ func newConn(client *Client) (*Conn, error) {
 		return nil, err
 	}
 
-	//c.decoder = protocol.NewDecoder(c.conn)
-
 	c.channels = make(map[string]*Channel)
 
 	c.wait = make(chan *pb.Protocol, 1)
@@ -86,7 +84,6 @@ func (c *Conn) run() {
 			return
 		}
 
-		//if p.GetMethod() == "Push" {
 		if p.GetMethod() == pb.Push {
 			queueName := p.GetQueue()
 			c.Lock()
@@ -117,7 +114,6 @@ func (c *Conn) request(p *pb.Protocol, expectMethod string) (*pb.Protocol, error
 		return nil, fmt.Errorf("wait channel closed")
 	}
 
-	//if rp.GetMethod() == "Error" {
 	if rp.GetMethod() == pb.Error {
 		return nil, fmt.Errorf("error:%s", rp.GetBody())
 	}
@@ -151,7 +147,6 @@ func (c *Conn) writeProtocol(p *pb.Protocol) error {
 
 func (c *Conn) Publish(queue string, routingKey string, body []byte, pubType string) (int64, error) {
 	p := &pb.Protocol{
-		//Method:     proto.String("Publish"),
 		Method:     proto.String(pb.Publish),
 		RoutingKey: proto.String(routingKey),
 		PubType:    proto.String(pubType),
@@ -169,7 +164,6 @@ func (c *Conn) Publish(queue string, routingKey string, body []byte, pubType str
 	fmt.Printf("p:%s\n", p.String())
 	fmt.Printf("Get np:%s\n", np.String())
 
-	//return strconv.ParseInt(string(np.GetBody()), 10, 64)
 	return strconv.ParseInt(string(np.GetMsgid()), 10, 64)
 }
 
@@ -187,7 +181,6 @@ func (c *Conn) Bind(queue string, routingKey string, noAck bool) (*Channel, erro
 	}
 
 	p := &pb.Protocol{
-		//Method:     proto.String("Bind"),
 		Method:     proto.String(pb.Bind),
 		RoutingKey: proto.String(routingKey),
 		Queue:      proto.String(queue),
@@ -214,7 +207,6 @@ func (c *Conn) unbindAll() error {
 	c.channels = make(map[string]*Channel)
 
 	p := &pb.Protocol{
-		//Method: proto.String("UnBind"),
 		Method: proto.String(pb.UnBind),
 		Queue:  proto.String(""),
 	}
@@ -253,7 +245,6 @@ func (c *Conn) unbind(queue string) error {
 
 func (c *Conn) ack(queue string, msgId string) error {
 	p := &pb.Protocol{
-		//Method: proto.String("Ack"),
 		Method: proto.String(pb.Ack),
 		Queue:  proto.String(queue),
 		Msgid:  proto.String(msgId),

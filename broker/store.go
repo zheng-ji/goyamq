@@ -6,7 +6,6 @@ import (
 )
 
 type StoreDriver interface {
-	//Open(configJson json.RawMessage) (Store, error)
 	Open(configStr string) (Store, error)
 }
 
@@ -31,7 +30,6 @@ func RegisterStore(name string, d StoreDriver) error {
 	return nil
 }
 
-//func OpenStore(name string, configJson json.RawMessage) (Store, error) {
 func OpenStore(name string, configStr string) (Store, error) {
 	d, ok := stores[name]
 	if !ok {
@@ -44,7 +42,6 @@ func OpenStore(name string, configStr string) (Store, error) {
 type MemStoreDriver struct {
 }
 
-//func (d MemStoreDriver) Open(jsonConfig json.RawMessage) (Store, error) {
 func (d MemStoreDriver) Open(configStr string) (Store, error) {
 	return newMemStore()
 }
@@ -111,10 +108,7 @@ func (s *MemStore) Delete(queue string, msgId int64) error {
 
 	for i, m := range q {
 		if m.id == msgId {
-			copy(q[i:], q[i+1:])
-			q[len(q)-1] = nil
-
-			q = q[:len(q)-1]
+			q = append(q[:i], q[i+1:]...)
 			if len(q) == 0 {
 				delete(s.msgs, key)
 			} else {

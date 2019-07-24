@@ -78,7 +78,7 @@ func (c *Client) PublishFanout(queue string, body []byte) (int64, error) {
 }
 
 func (c *Client) PublishDirect(queue string, routingKey string, body []byte) (int64, error) {
-	return c.Publish(queue, routingKey, body, "Direct")
+	return c.Publish(queue, routingKey, body, pb.Direct)
 }
 
 func (c *Client) popConn() *Conn {

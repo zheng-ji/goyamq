@@ -9,14 +9,14 @@ import (
 type Client struct {
 	sync.Mutex
 
-	cfg *Config
+	cfg *ClientConfig
 
 	conns *list.List
 
 	closed bool
 }
 
-func NewClientWithConfig(cfg *Config) (*Client, error) {
+func NewClientWithConfig(cfg *ClientConfig) (*Client, error) {
 	c := new(Client)
 	c.cfg = cfg
 
@@ -26,8 +26,8 @@ func NewClientWithConfig(cfg *Config) (*Client, error) {
 	return c, nil
 }
 
-func NewClient(jsonConfig json.RawMessage) (*Client, error) {
-	cfg, err := parseConfigJson(jsonConfig)
+func NewClient(filepath string) (*Client, error) {
+	cfg, err := parseConfigFile(filepath)
 	if err != nil {
 		return nil, err
 	}

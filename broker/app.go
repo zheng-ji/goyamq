@@ -1,12 +1,12 @@
 package broker
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"net"
 )
 
 type App struct {
-	cfg *Config
+	cfg *BrokerConfig
 
 	listener net.Listener
 
@@ -15,7 +15,7 @@ type App struct {
 	qs *queues
 }
 
-func NewAppWithConfig(cfg *Config) (*App, error) {
+func NewAppWithConfig(cfg *BrokerConfig) (*App, error) {
 	app := new(App)
 
 	app.cfg = cfg
@@ -29,7 +29,7 @@ func NewAppWithConfig(cfg *Config) (*App, error) {
 
 	app.qs = newQueues(app)
 
-	app.ms, err = OpenStore(cfg.Store, cfg.StoreConfig)
+	app.ms, err = OpenStore(cfg.Store, cfg.StoreAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +37,13 @@ func NewAppWithConfig(cfg *Config) (*App, error) {
 	return app, nil
 }
 
-func NewApp(jsonConfig json.RawMessage) (*App, error) {
-	cfg, err := parseConfigJson(jsonConfig)
+func NewApp(filepath string) (*App, error) {
+	config, err := parseConfigFile(filepath)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewAppWithConfig(cfg)
+	return NewAppWithConfig(config)
 }
 
 func (app *App) Close() {

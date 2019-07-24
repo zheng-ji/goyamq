@@ -31,19 +31,21 @@ func RegisterStore(name string, d StoreDriver) error {
 	return nil
 }
 
-func OpenStore(name string, configJson json.RawMessage) (Store, error) {
+//func OpenStore(name string, configJson json.RawMessage) (Store, error) {
+func OpenStore(name string, config string) (Store, error) {
 	d, ok := stores[name]
 	if !ok {
 		return nil, fmt.Errorf("%s has not been registered", name)
 	}
 
-	return d.Open(configJson)
+	return d.Open(config)
 }
 
 type MemStoreDriver struct {
 }
 
-func (d MemStoreDriver) Open(jsonConfig json.RawMessage) (Store, error) {
+//func (d MemStoreDriver) Open(jsonConfig json.RawMessage) (Store, error) {
+func (d MemStoreDriver) Open(configStr string) (Store, error) {
 	return newMemStore()
 }
 

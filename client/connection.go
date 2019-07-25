@@ -51,6 +51,8 @@ func newConn(client *Client) (*Conn, error) {
 
 	c.lastHeartbeat = 0
 
+	c.keepAlive()
+
 	go c.run()
 
 	return c, nil
@@ -60,6 +62,24 @@ func (c *Conn) Close() {
 	c.unbindAll()
 
 	c.client.pushConn(c)
+}
+
+func (c *Conn) keepAlive() {
+	var f func()
+	f = func() {
+		p := &pb.Protocol{
+			Method: proto.String(pb.HeartBeat),
+		}
+
+		err := c.writeProtocol(p)
+		if err != nil {
+			c.close()
+			return
+		} else {
+			time.AfterFunc(time.Duration(c.cfg.KeepAlive)*time.Second, f)
+		}
+	}
+	time.AfterFunc(time.Duration(c.cfg.KeepAlive)*time.Second, f)
 }
 
 func (c *Conn) close() {
@@ -170,8 +190,7 @@ func (c *Conn) Publish(queue string, routingKey string, body []byte, pubType str
 	if err != nil {
 		return 0, err
 	}
-	fmt.Printf("p:%s\n", p.String())
-	fmt.Printf("Get np:%s\n", np.String())
+	log.Infof("p:%s, np:%s", p.String(), np.String())
 
 	return strconv.ParseInt(string(np.GetMsgid()), 10, 64)
 }

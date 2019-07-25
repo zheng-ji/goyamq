@@ -31,6 +31,8 @@ func newConn(app *App, co net.Conn) *conn {
 	c.app = app
 	c.c = co
 
+	c.checkKeepAlive()
+
 	c.channels = make(map[string]*channel)
 
 	return c
@@ -101,6 +103,21 @@ func (c *conn) onRead() {
 			c.writeError(err)
 		}
 	}
+}
+
+func (c *conn) checkKeepAlive() {
+	var f func()
+	f = func() {
+		if time.Now().Unix()-c.lastUpdate > int64(1.5*float32(c.app.cfg.KeepAlive)) {
+			log.Info("keepalive timeout")
+			c.c.Close()
+			return
+		} else {
+			time.AfterFunc(time.Duration(c.app.cfg.KeepAlive)*time.Second, f)
+		}
+	}
+
+	time.AfterFunc(time.Duration(c.app.cfg.KeepAlive)*time.Second, f)
 }
 
 func (c *conn) writeError(err error) {

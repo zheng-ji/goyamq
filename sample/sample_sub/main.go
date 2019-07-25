@@ -29,11 +29,9 @@ func main() {
 	defer conn.Close()
 
 	var ch *client.Channel
-	ch, err = conn.Bind(*queue, "", false)
-	//ch, err = conn.Bind(*queue, "", true)
+	ch, err = conn.Bind(*queue, "", false) // 不需要ack
+	//ch, err = conn.Bind(*queue, "", true) //需要ack
 
-	//msg := ch.GetMsg()
-	//println("get msg: ", string(msg))
 	for {
 		msg := ch.GetMsg()
 		println("get msg: ", string(msg))

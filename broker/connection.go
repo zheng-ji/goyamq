@@ -57,18 +57,13 @@ func (c *conn) onRead() {
 		if err := recover(); err != nil {
 			buf := make([]byte, 1024)
 			buf = buf[:runtime.Stack(buf, false)]
-			log.Fatal("crash %v:%s", err, buf)
+			log.Fatalf("crash %v:%s", err, buf)
 		}
 	}()
 
-	buf := make([]byte, 1024)
 	for {
-
+		buf := make([]byte, 1024)
 		length, err := c.c.Read(buf)
-		p := &pb.Protocol{}
-		err = proto.Unmarshal(buf[0:length], p)
-		fmt.Printf("length:%d\n", length)
-		fmt.Printf("p:%s\n", p.String())
 
 		if err != nil {
 			if err != io.EOF {
@@ -77,10 +72,14 @@ func (c *conn) onRead() {
 			return
 		}
 
-		if length == 0 {
-			log.Info("read length 0 return ")
+		p := &pb.Protocol{}
+		err = proto.Unmarshal(buf[0:length], p)
+		if err != nil {
+			log.Error("Unmarsh fail")
 			return
 		}
+
+		log.Infof("p:%s", p.String())
 
 		switch p.GetMethod() {
 		case pb.Publish:
@@ -114,6 +113,7 @@ func (c *conn) writeError(err error) {
 }
 
 func (c *conn) writeProtocol(p *pb.Protocol) error {
+	log.Info("in [writeProtocol]", p.String())
 	buf, err := proto.Marshal(p)
 	if err != nil {
 		return err
@@ -172,7 +172,12 @@ func (c *conn) handlePublish(p *pb.Protocol) error {
 
 	message := p.GetBody()
 
-	msg, _ := c.app.saveMsg(queue, routingKey, tp, []byte(message))
+	msg, err := c.app.saveMsg(queue, routingKey, tp, []byte(message))
+	if err != nil {
+		log.Errorf("err:%v", err)
+		return err
+	}
+
 	q := c.app.qs.Get(queue)
 	q.Push(msg)
 
@@ -190,7 +195,7 @@ func (c *conn) handleAck(p *pb.Protocol) error {
 	queue := p.GetQueue()
 	ch, ok := c.channels[queue]
 	if !ok {
-		log.Info("invalide queue:", queue)
+		log.Errorf("invalide queue:%s", queue)
 		return nil
 	}
 
@@ -219,6 +224,7 @@ func (p *connMsgPusher) Push(ch *channel, m *msg) error {
 	err := p.c.writeProtocol(np)
 
 	if err == nil && !ch.ack {
+		log.Info("In [Push] %v", np)
 		ch.Ack(m.id)
 	}
 

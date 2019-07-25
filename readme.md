@@ -17,6 +17,7 @@ go get github.com/golang/protobuf/proto
 - [x] 用 Yaml 做配置文件
 - [x] 规范 ProtoBuf 协议
 - [x] 服务化
-- [ ] Ack 逻辑
+- [x] 网络 Bug
+- [ ] Ack 时候失败
 - [ ] 处理错误异常
 - [ ] 性能优化

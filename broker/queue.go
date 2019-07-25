@@ -114,12 +114,12 @@ func (rq *queue) Unbind(c *channel) {
 func (rq *queue) Ack(msgId int64) {
 	f := func() {
 
-		log.Info("Ack %v", msgId)
+		log.Infof("Ack %v", msgId)
 		if msgId != rq.lastPushId {
 			log.Info("Break here msgId:%v, lastPushId:%v", msgId, rq.lastPushId)
 			return
 		}
-		log.Info("Break here2 msgId:%v, lastPushId:%v", msgId, rq.lastPushId)
+		log.Infof("Break here2 msgId:%v, lastPushId:%v", msgId, rq.lastPushId)
 
 		rq.store.Delete(rq.name, msgId)
 

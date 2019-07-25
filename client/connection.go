@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 	"goyamq/pb"
 	"net"
 	"strconv"
@@ -78,11 +79,18 @@ func (c *Conn) run() {
 	for {
 		buf := make([]byte, 1024)
 		length, err := c.conn.Read(buf)
-		p := &pb.Protocol{}
-		err = proto.Unmarshal(buf[0:length], p)
+
 		if err != nil {
 			return
 		}
+
+		p := &pb.Protocol{}
+		err = proto.Unmarshal(buf[0:length], p)
+		if err != nil {
+			log.Error("Unmarsh fail")
+			return
+		}
+		log.Infof("receive p:%s", p.String())
 
 		if p.GetMethod() == pb.Push {
 			queueName := p.GetQueue()
@@ -121,6 +129,7 @@ func (c *Conn) request(p *pb.Protocol, expectMethod string) (*pb.Protocol, error
 	if rp.GetMethod() != expectMethod {
 		return nil, fmt.Errorf("expectMethod err expect:%s, get:%s", expectMethod, rp.GetMethod())
 	}
+	log.Infof("request %s, expect:%s", p.String(), expectMethod)
 
 	return rp, nil
 }

@@ -106,18 +106,18 @@ func (c *conn) onRead() {
 }
 
 func (c *conn) checkKeepAlive() {
-	var f func()
-	f = func() {
-		if time.Now().Unix()-c.lastUpdate > int64(1.5*float32(c.app.cfg.KeepAlive)) {
-			log.Info("keepalive timeout")
-			c.c.Close()
-			return
-		} else {
-			time.AfterFunc(time.Duration(c.app.cfg.KeepAlive)*time.Second, f)
-		}
-	}
 
-	time.AfterFunc(time.Duration(c.app.cfg.KeepAlive)*time.Second, f)
+	ticker := time.NewTicker(time.Duration(c.app.cfg.KeepAlive) * time.Second)
+
+	go func() {
+		for _ = range ticker.C {
+			if time.Now().Unix()-c.lastUpdate > int64(1.5*float32(c.app.cfg.KeepAlive)) {
+				log.Info("keepalive timeout")
+				c.c.Close()
+				return
+			}
+		}
+	}()
 }
 
 func (c *conn) writeError(err error) {

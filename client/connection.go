@@ -65,21 +65,22 @@ func (c *Conn) Close() {
 }
 
 func (c *Conn) keepAlive() {
-	var f func()
-	f = func() {
-		p := &pb.Protocol{
-			Method: proto.String(pb.HeartBeat),
-		}
 
-		err := c.writeProtocol(p)
-		if err != nil {
-			c.close()
-			return
-		} else {
-			time.AfterFunc(time.Duration(c.cfg.KeepAlive)*time.Second, f)
+	ticker := time.NewTicker(time.Duration(c.cfg.KeepAlive) * time.Second)
+
+	go func() {
+		for _ = range ticker.C {
+			p := &pb.Protocol{
+				Method: proto.String(pb.HeartBeat),
+			}
+
+			err := c.writeProtocol(p)
+			if err != nil {
+				c.close()
+				return
+			}
 		}
-	}
-	time.AfterFunc(time.Duration(c.cfg.KeepAlive)*time.Second, f)
+	}()
 }
 
 func (c *Conn) close() {

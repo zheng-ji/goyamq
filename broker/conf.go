@@ -11,7 +11,6 @@ type BrokerConfig struct {
 	Addr string `yaml:"addr"`
 
 	KeepAlive      int `yaml:"keep_alive"`
-	MaxMessageSize int `yaml:"max_msg_size"`
 	MessageTimeout int `yaml:"msg_timeout"`
 	MaxQueueSize   int `yaml:"max_queue_size"`
 
@@ -26,7 +25,6 @@ func NewDefaultConfig() *BrokerConfig {
 
 	cfg.KeepAlive = 65
 
-	cfg.MaxMessageSize = 1024
 	cfg.MessageTimeout = 3600 * 24
 	cfg.MaxQueueSize = 1024
 

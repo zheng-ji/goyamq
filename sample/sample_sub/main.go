@@ -30,11 +30,13 @@ func main() {
 
 	var ch *client.Channel
 	ch, err = conn.Bind(*queue, "", false)
+	//ch, err = conn.Bind(*queue, "", true)
 
 	//msg := ch.GetMsg()
 	//println("get msg: ", string(msg))
 	for {
 		msg := ch.GetMsg()
 		println("get msg: ", string(msg))
+		//ch.Ack()
 	}
 }

@@ -1,5 +1,5 @@
-./sample_broker
+./sample_broker/sample_broker
 
-./sample_pub -queue=test -msg=golang
+./sample_pub/sample_pub -queue=test -msg=golang
 
-./sample_sub -queue=test
+./sample_sub/sample_sub -queue=test

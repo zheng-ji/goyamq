@@ -188,7 +188,11 @@ func (c *conn) handlePublish(p *pb.Protocol) error {
 
 func (c *conn) handleAck(p *pb.Protocol) error {
 	queue := p.GetQueue()
-	ch, _ := c.channels[queue]
+	ch, ok := c.channels[queue]
+	if !ok {
+		log.Info("invalide queue:", queue)
+		return nil
+	}
 
 	msgId, err := strconv.ParseInt(p.GetMsgid(), 10, 64)
 	if err != nil {

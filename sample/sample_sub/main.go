@@ -11,6 +11,7 @@ var queue = flag.String("queue", "test_queue", "queue want to bind")
 func main() {
 	flag.Parse()
 
+	// client->dial to gen conn->gen an queue channel bind channle
 	cfg := client.NewDefaultConfig()
 	cfg.BrokerAddr = *addr
 

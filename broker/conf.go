@@ -21,7 +21,7 @@ type BrokerConfig struct {
 func NewDefaultConfig() *BrokerConfig {
 	cfg := new(BrokerConfig)
 
-	cfg.Addr = "127.0.0.1:11181"
+	cfg.Addr = "127.0.0.1:12345"
 
 	cfg.KeepAlive = 65
 

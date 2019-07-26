@@ -18,7 +18,7 @@ type ClientConfig struct {
 func NewDefaultConfig() *ClientConfig {
 	cfg := new(ClientConfig)
 
-	cfg.BrokerAddr = "127.0.0.1:11181"
+	cfg.BrokerAddr = "127.0.0.1:12345"
 	cfg.KeepAlive = 60
 	cfg.IdleConns = 2
 	cfg.MaxQueueSize = 16

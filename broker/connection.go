@@ -257,7 +257,7 @@ func (c *conn) handleBind(p *pb.Protocol) error {
 	ch, ok := c.channels[queue]
 	if !ok {
 		q := c.app.qs.Get(queue)
-		ch = newChannel(&connMsgPusher{c}, q, routingKey, ack)
+		ch = newChannel(connMsgPusher{c}, q, routingKey, ack)
 		c.channels[queue] = ch
 	} else {
 		ch.Reset(routingKey, ack)
@@ -302,20 +302,16 @@ func (c *conn) handleUnbind(p *pb.Protocol) error {
 	return nil
 }
 
-type msgPusher interface {
-	Push(ch *channel, m *msg) error
-}
-
 //use channel represent conn bind a queue
 
 type channel struct {
-	p          msgPusher
+	p          connMsgPusher
 	q          *queue
 	routingKey string
 	ack        bool
 }
 
-func newChannel(p msgPusher, q *queue, routingKey string, ack bool) *channel {
+func newChannel(p connMsgPusher, q *queue, routingKey string, ack bool) *channel {
 	ch := new(channel)
 
 	ch.p = p

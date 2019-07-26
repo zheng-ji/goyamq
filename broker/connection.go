@@ -321,7 +321,6 @@ func newChannel(p connMsgPusher, q *queue, routingKey string, ack bool) *channel
 	ch.ack = ack
 
 	q.Bind(ch)
-
 	return ch
 }
 

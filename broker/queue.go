@@ -67,6 +67,7 @@ func (rq *queue) run() {
 
 func (rq *queue) Bind(c *channel) {
 	f := func() {
+		log.Info("rq.ch func Bind")
 		for e := rq.channels.Front(); e != nil; e = e.Next() {
 			if e.Value.(*channel) == c {
 
@@ -106,6 +107,7 @@ func (rq *queue) Unbind(c *channel) {
 			rq.lastPushId = -1
 			rq.push()
 		}
+		log.Infof("rq.ch func UnBind, repush:%v", false)
 	}
 
 	rq.ch <- f
@@ -114,12 +116,10 @@ func (rq *queue) Unbind(c *channel) {
 func (rq *queue) Ack(msgId int64) {
 	f := func() {
 
-		log.Infof("Ack %v", msgId)
 		if msgId != rq.lastPushId {
 			log.Info("Break here msgId:%v, lastPushId:%v", msgId, rq.lastPushId)
 			return
 		}
-		log.Infof("Break here2 msgId:%v, lastPushId:%v", msgId, rq.lastPushId)
 
 		rq.store.Delete(rq.name, msgId)
 
@@ -127,6 +127,7 @@ func (rq *queue) Ack(msgId int64) {
 		rq.lastPushId = -1
 
 		rq.push()
+		log.Infof("rq.ch func Ack, msgId:%v, lastPushId:%v", msgId, rq.lastPushId)
 	}
 
 	rq.ch <- f
@@ -135,6 +136,7 @@ func (rq *queue) Ack(msgId int64) {
 func (rq *queue) Push(m *msg) {
 	f := func() {
 		rq.push()
+		log.Infof("rq.ch func Push, msg:%v", m)
 	}
 
 	rq.ch <- f
@@ -172,10 +174,12 @@ func (rq *queue) push() {
 	}
 
 	if rq.channels.Len() == 0 {
+		log.Info("rq.channels.Len == 0 push return")
 		return
 	}
 
 	m, err := rq.getMsg()
+	log.Infof("rq.getMsg:%v err:%v", m, err)
 	if err != nil {
 		return
 	} else if m == nil {
@@ -233,6 +237,7 @@ func (rq *queue) pushDirect(m *msg) error {
 
 		f := func() {
 			rq.push()
+			log.Infof("rq.ch func PushDirect, rq.name:%v id:%v", rq.name, m.id)
 		}
 
 		rq.ch <- f
@@ -255,6 +260,7 @@ func (rq *queue) pushDirect(m *msg) error {
 func (rq *queue) pushFanout(m *msg) error {
 	done := make(chan bool, rq.channels.Len())
 
+	log.Infof("In pushFanout m:%v", m)
 	for e := rq.channels.Front(); e != nil; e = e.Next() {
 		c := e.Value.(*channel)
 		rq.waitingAcks[c] = struct{}{}

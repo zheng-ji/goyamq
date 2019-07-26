@@ -23,7 +23,7 @@ func NewDefaultConfig() *BrokerConfig {
 
 	cfg.Addr = "127.0.0.1:12345"
 
-	cfg.KeepAlive = 65
+	cfg.KeepAlive = 6000
 
 	cfg.MessageTimeout = 3600 * 24
 	cfg.MaxQueueSize = 1024

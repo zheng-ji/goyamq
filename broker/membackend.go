@@ -74,7 +74,11 @@ func (s *MemStore) Delete(queue string, msgId int64) error {
 
 	for i, m := range q {
 		if m.id == msgId {
-			q = append(q[:i], q[i+1:]...)
+			//q = append(q[:i], q[i+1:]...)
+			copy(q[i:], q[i+1:])
+			q[len(q)-1] = nil
+
+			q = q[:len(q)-1]
 			if len(q) == 0 {
 				delete(s.msgs, key)
 			} else {

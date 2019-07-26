@@ -111,7 +111,7 @@ func (c *conn) checkKeepAlive() {
 
 	go func() {
 		for _ = range ticker.C {
-			if time.Now().Unix()-c.lastUpdate > int64(1.5*float32(c.app.cfg.KeepAlive)) {
+			if time.Now().Unix()-c.lastUpdate > int64(float32(c.app.cfg.KeepAlive)) {
 				log.Info("keepalive timeout")
 				c.c.Close()
 				return

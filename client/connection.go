@@ -27,8 +27,6 @@ type Conn struct {
 
 	closed bool
 
-	lastHeartbeat int64
-
 	channels map[string]*Channel
 }
 
@@ -48,8 +46,6 @@ func newConn(client *Client) (*Conn, error) {
 	c.wait = make(chan *pb.Protocol, 1)
 
 	c.closed = false
-
-	c.lastHeartbeat = 0
 
 	c.keepAlive()
 

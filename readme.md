@@ -2,7 +2,7 @@
 
 Yet Another Message Queue Base On Protobuffer
 
-基于 ProtoBuffer 实现的消息队列
+基于 ProtoBuffer 实现的消息队列, 练手学习
 
 ## Install
 

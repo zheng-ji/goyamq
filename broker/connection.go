@@ -63,44 +63,90 @@ func (c *conn) onRead() {
 		}
 	}()
 
-	for {
-		buf := make([]byte, 1024)
-		length, err := c.c.Read(buf)
+	/*
+		for {
+			buf := make([]byte, 1024)
+			length, err := c.c.Read(buf)
 
-		if err != nil {
-			if err != io.EOF {
-				log.Info("on read error %v", err)
+			if err != nil {
+				if err != io.EOF {
+					log.Info("on read error %v", err)
+				}
+				return
 			}
+
+			p := &pb.Protocol{}
+			err = proto.Unmarshal(buf[0:length], p)
+			if err != nil {
+				log.Error("Unmarsh fail")
+				return
+			}
+
+			log.Infof("p:%s", p.String())
+
+			switch p.GetMethod() {
+			case pb.Publish:
+				err = c.handlePublish(p)
+			case pb.Bind:
+				err = c.handleBind(p)
+			case pb.UnBind:
+				err = c.handleUnbind(p)
+			case pb.Ack:
+				err = c.handleAck(p)
+			case pb.HeartBeat:
+				c.lastUpdate = time.Now().Unix()
+			default:
+				log.Info("invalid protocol method %s", p.GetMethod())
+				return
+			}
+
+			if err != nil {
+				c.writeError(err)
+			}
+		}
+	*/
+	allbuf := make([]byte, 0)
+	buffer := make([]byte, 1024)
+	for {
+		readLen, err := c.c.Read(buffer)
+
+		if err == io.EOF {
+			log.Infof("Client %s close connection", c.c.RemoteAddr().String())
 			return
 		}
 
-		p := &pb.Protocol{}
-		err = proto.Unmarshal(buf[0:length], p)
 		if err != nil {
-			log.Error("Unmarsh fail")
+			log.Errorf("Read Data from client:%s err:%s", c.c.RemoteAddr().String(), err.Error())
 			return
 		}
+		allbuf = append(allbuf, buffer[:readLen]...)
 
-		log.Infof("p:%s", p.String())
+		for {
+			p := &pb.Protocol{}
+			err = proto.Unmarshal(allbuf, p)
+			if err != nil || proto.Size(p) == 0 {
+				log.Errorf("proto size zero return p:%v, err:%v, len:%d", p, err, proto.Size(p))
+				break
+			}
+			log.Infof("receive p:%s", p.String())
 
-		switch p.GetMethod() {
-		case pb.Publish:
-			err = c.handlePublish(p)
-		case pb.Bind:
-			err = c.handleBind(p)
-		case pb.UnBind:
-			err = c.handleUnbind(p)
-		case pb.Ack:
-			err = c.handleAck(p)
-		case pb.HeartBeat:
-			c.lastUpdate = time.Now().Unix()
-		default:
-			log.Info("invalid protocol method %s", p.GetMethod())
-			return
-		}
-
-		if err != nil {
-			c.writeError(err)
+			switch p.GetMethod() {
+			case pb.Publish:
+				err = c.handlePublish(p)
+			case pb.Bind:
+				err = c.handleBind(p)
+			case pb.UnBind:
+				err = c.handleUnbind(p)
+			case pb.Ack:
+				err = c.handleAck(p)
+			case pb.HeartBeat:
+				c.lastUpdate = time.Now().Unix()
+			default:
+				log.Info("invalid protocol method %s", p.GetMethod())
+				return
+			}
+			allbuf = allbuf[proto.Size(p):]
+			break
 		}
 	}
 }
@@ -142,9 +188,11 @@ func (c *conn) writeProtocol(p *pb.Protocol) error {
 	c.Unlock()
 
 	if err != nil {
+		log.Errorf("writeProtocol Err:%v", err)
 		c.c.Close()
 		return err
 	} else if n != len(buf) {
+		log.Errorf("writeProtocol n:%d != len(buf):%d", n, len(buf))
 		c.c.Close()
 		return fmt.Errorf("write incomplete, %d less than %d", n, len(buf))
 	} else {
@@ -243,6 +291,8 @@ func (p *connMsgPusher) Push(ch *channel, m *msg) error {
 	if err == nil && !ch.ack {
 		log.Info("In [Push] %v", np)
 		ch.Ack(m.id)
+	} else {
+		log.Errorf("connMsgPusher.writeProtocol p:%s, err:%v", np.String(), err)
 	}
 
 	return err

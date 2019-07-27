@@ -260,11 +260,12 @@ func (rq *queue) pushDirect(m *msg) error {
 func (rq *queue) pushFanout(m *msg) error {
 	done := make(chan bool, rq.channels.Len())
 
-	log.Infof("In pushFanout m:%v", m)
+	log.Infof("In pushFanout m:%v, rq.channels.Len:%d", m, rq.channels.Len())
 	for e := rq.channels.Front(); e != nil; e = e.Next() {
 		c := e.Value.(*channel)
 		rq.waitingAcks[c] = struct{}{}
 
+		log.Infof("In child push m:%v", m)
 		rq.pushMsg(done, m, c)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 	"goyamq/pb"
+	"io"
 	"net"
 	"strconv"
 	"sync"
@@ -43,7 +44,8 @@ func newConn(client *Client) (*Conn, error) {
 
 	c.channels = make(map[string]*Channel)
 
-	c.wait = make(chan *pb.Protocol, 1)
+	//c.wait = make(chan *pb.Protocol, 1)
+	c.wait = make(chan *pb.Protocol, 3)
 
 	c.closed = false
 
@@ -72,6 +74,7 @@ func (c *Conn) keepAlive() {
 
 			err := c.writeProtocol(p)
 			if err != nil {
+				log.Error(err)
 				c.close()
 				return
 			}
@@ -93,37 +96,83 @@ func (c *Conn) run() {
 		c.closed = true
 	}()
 
-	for {
-		buf := make([]byte, 1024)
-		length, err := c.conn.Read(buf)
+	/*
+		for {
+			buf := make([]byte, 1024)
+			length, err := c.conn.Read(buf)
 
-		if err != nil {
-			return
-		}
-
-		p := &pb.Protocol{}
-		err = proto.Unmarshal(buf[0:length], p)
-		if err != nil {
-			log.Error("Unmarsh fail")
-			return
-		}
-		log.Infof("receive p:%s", p.String())
-
-		if p.GetMethod() == pb.Push {
-			queueName := p.GetQueue()
-			c.Lock()
-			ch, ok := c.channels[queueName]
-			if !ok {
-				c.Unlock()
+			if err != nil {
 				return
 			}
-			c.Unlock()
 
-			ch.pushMsg(p.GetMsgid(), []byte(p.GetBody()))
-		} else {
-			c.wait <- p
+			p := &pb.Protocol{}
+			err = proto.Unmarshal(buf[0:length], p)
+			if err != nil {
+				log.Error("Unmarsh fail")
+				return
+			}
+			log.Infof("receive p:%s", p.String())
+
+			if p.GetMethod() == pb.Push {
+				queueName := p.GetQueue()
+				c.Lock()
+				ch, ok := c.channels[queueName]
+				if !ok {
+					c.Unlock()
+					return
+				}
+				c.Unlock()
+
+				ch.pushMsg(p.GetMsgid(), []byte(p.GetBody()))
+			} else {
+				c.wait <- p
+			}
+
+		}
+	*/
+	allbuf := make([]byte, 0)
+	buffer := make([]byte, 1024)
+	for {
+		readLen, err := c.conn.Read(buffer)
+
+		if err == io.EOF {
+			log.Infof("Client %s close connection", c.conn.RemoteAddr().String())
+			return
 		}
 
+		if err != nil {
+			log.Errorf("Read Data from client:%s err:%s", c.conn.RemoteAddr().String(), err.Error())
+			return
+		}
+		allbuf = append(allbuf, buffer[:readLen]...)
+		//log.Infof("Read data from client:%s length:%d", c.conn.RemoteAddr().String(), readLen)
+
+		for {
+			p := &pb.Protocol{}
+			err = proto.Unmarshal(allbuf, p)
+			if err != nil || proto.Size(p) == 0 {
+				log.Errorf("Unmarsh fail p:%v, err:%v, len:%d", p, err, proto.Size(p))
+				break
+			}
+			log.Infof("receive p:%s", p.String())
+
+			if p.GetMethod() == pb.Push {
+				queueName := p.GetQueue()
+				c.Lock()
+				ch, ok := c.channels[queueName]
+				if !ok {
+					c.Unlock()
+					return
+				}
+				c.Unlock()
+
+				ch.pushMsg(p.GetMsgid(), []byte(p.GetBody()))
+			} else {
+				c.wait <- p
+			}
+			allbuf = allbuf[proto.Size(p):]
+			break
+		}
 	}
 }
 

@@ -96,40 +96,6 @@ func (c *Conn) run() {
 		c.closed = true
 	}()
 
-	/*
-		for {
-			buf := make([]byte, 1024)
-			length, err := c.conn.Read(buf)
-
-			if err != nil {
-				return
-			}
-
-			p := &pb.Protocol{}
-			err = proto.Unmarshal(buf[0:length], p)
-			if err != nil {
-				log.Error("Unmarsh fail")
-				return
-			}
-			log.Infof("receive p:%s", p.String())
-
-			if p.GetMethod() == pb.Push {
-				queueName := p.GetQueue()
-				c.Lock()
-				ch, ok := c.channels[queueName]
-				if !ok {
-					c.Unlock()
-					return
-				}
-				c.Unlock()
-
-				ch.pushMsg(p.GetMsgid(), []byte(p.GetBody()))
-			} else {
-				c.wait <- p
-			}
-
-		}
-	*/
 	allbuf := make([]byte, 0)
 	buffer := make([]byte, 1024)
 	for {

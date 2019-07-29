@@ -63,48 +63,6 @@ func (c *conn) onRead() {
 		}
 	}()
 
-	/*
-		for {
-			buf := make([]byte, 1024)
-			length, err := c.c.Read(buf)
-
-			if err != nil {
-				if err != io.EOF {
-					log.Info("on read error %v", err)
-				}
-				return
-			}
-
-			p := &pb.Protocol{}
-			err = proto.Unmarshal(buf[0:length], p)
-			if err != nil {
-				log.Error("Unmarsh fail")
-				return
-			}
-
-			log.Infof("p:%s", p.String())
-
-			switch p.GetMethod() {
-			case pb.Publish:
-				err = c.handlePublish(p)
-			case pb.Bind:
-				err = c.handleBind(p)
-			case pb.UnBind:
-				err = c.handleUnbind(p)
-			case pb.Ack:
-				err = c.handleAck(p)
-			case pb.HeartBeat:
-				c.lastUpdate = time.Now().Unix()
-			default:
-				log.Info("invalid protocol method %s", p.GetMethod())
-				return
-			}
-
-			if err != nil {
-				c.writeError(err)
-			}
-		}
-	*/
 	allbuf := make([]byte, 0)
 	buffer := make([]byte, 1024)
 	for {

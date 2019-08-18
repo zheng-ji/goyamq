@@ -20,6 +20,6 @@ go get github.com/golang/protobuf/proto
 - [x] 网络 Bug
 - [x] 定时器 HeartBeat 
 - [x] Ack 时候失败
-- [ ] 处理错误异常
+- [x] 处理错误异常
 - [ ] 消息落地  
 - [ ] 性能优化

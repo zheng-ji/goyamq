@@ -17,13 +17,13 @@ type Client struct {
 }
 
 func NewClientWithConfig(cfg *ClientConfig) (*Client, error) {
-	c := new(Client)
-	c.cfg = cfg
+	client := new(Client)
+	client.cfg = cfg
 
-	c.conns = list.New()
-	c.closed = false
+	client.conns = list.New()
+	client.closed = false
 
-	return c, nil
+	return client, nil
 }
 
 func NewClient(filepath string) (*Client, error) {
@@ -35,62 +35,43 @@ func NewClient(filepath string) (*Client, error) {
 	return NewClientWithConfig(cfg)
 }
 
-func (c *Client) Close() {
-	c.Lock()
-	defer c.Unlock()
+func (client *Client) Close() {
+	client.Lock()
+	defer client.Unlock()
 
-	c.closed = true
+	client.closed = true
 
 	for {
-		if c.conns.Len() == 0 {
+		if client.conns.Len() == 0 {
 			break
 		}
 
-		e := c.conns.Front()
-		c.conns.Remove(e)
+		e := client.conns.Front()
+		client.conns.Remove(e)
 		conn := e.Value.(*Conn)
 		conn.close()
 	}
 }
 
-func (c *Client) Get() (*Conn, error) {
-	co := c.popConn()
+func (client *Client) Get() (*Conn, error) {
+	co := client.popConn()
 	if co != nil {
 		return co, nil
 	} else {
-		return newConn(c)
+		return newConn(client.cfg)
 	}
 }
 
-func (c *Client) Publish(queue string, routingKey string, body []byte, pubType string) (int64, error) {
-	conn, err := c.Get()
-	if err != nil {
-		return 0, err
-	}
-
-	defer conn.Close()
-
-	return conn.Publish(queue, routingKey, body, pubType)
-}
-
-func (c *Client) PublishFanout(queue string, body []byte) (int64, error) {
-	return c.Publish(queue, "", body, pb.FanOut)
-}
-
-func (c *Client) PublishDirect(queue string, routingKey string, body []byte) (int64, error) {
-	return c.Publish(queue, routingKey, body, pb.Direct)
-}
-
-func (c *Client) popConn() *Conn {
-	c.Lock()
-	defer c.Unlock()
+func (client *Client) popConn() *Conn {
+	client.Lock()
+	defer client.Unlock()
 
 	for {
-		if c.conns.Len() == 0 {
+		if client.conns.Len() == 0 {
 			return nil
 		} else {
-			e := c.conns.Front()
-			c.conns.Remove(e)
+			e := client.conns.Front()
+			client.conns.Remove(e)
 			conn := e.Value.(*Conn)
 			if !conn.closed {
 				return conn
@@ -99,13 +80,35 @@ func (c *Client) popConn() *Conn {
 	}
 }
 
-func (c *Client) pushConn(co *Conn) {
-	c.Lock()
-	defer c.Unlock()
+func (client *Client) pushConn(co *Conn) {
+	client.Lock()
+	defer client.Unlock()
 
-	if c.closed || c.conns.Len() >= c.cfg.IdleConns {
+	if client.closed || client.conns.Len() >= client.cfg.IdleConns {
 		co.close()
 	} else {
-		c.conns.PushBack(co)
+		client.conns.PushBack(co)
 	}
+}
+
+func (client *Client) Publish(queue string, routingKey string, body []byte, pubType string) (int64, error) {
+	conn, err := client.Get()
+	if err != nil {
+		return 0, err
+	}
+
+	defer func() {
+		conn.Close()
+		client.pushConn(conn)
+	}()
+
+	return conn.Publish(queue, routingKey, body, pubType)
+}
+
+func (client *Client) PublishFanout(queue string, body []byte) (int64, error) {
+	return client.Publish(queue, "", body, pb.FanOut)
+}
+
+func (client *Client) PublishDirect(queue string, routingKey string, body []byte) (int64, error) {
+	return client.Publish(queue, routingKey, body, pb.Direct)
 }

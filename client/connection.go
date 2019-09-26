@@ -1,7 +1,6 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
@@ -18,11 +17,9 @@ type Conn struct {
 
 	writeLock sync.Mutex
 
-	client *Client
-
 	cfg *ClientConfig
 
-	conn net.Conn
+	sockConn net.Conn
 
 	wait chan *pb.Protocol
 
@@ -31,21 +28,20 @@ type Conn struct {
 	channels map[string]*Channel
 }
 
-func newConn(client *Client) (*Conn, error) {
+func newConn(cfg *ClientConfig) (*Conn, error) {
+
 	c := new(Conn)
 
-	c.client = client
-	c.cfg = client.cfg
+	c.cfg = cfg
 
 	var err error
-	if c.conn, err = net.Dial("tcp", c.cfg.BrokerAddr); err != nil {
+	if c.sockConn, err = net.Dial("tcp", c.cfg.BrokerAddr); err != nil {
 		return nil, err
 	}
 
 	c.channels = make(map[string]*Channel)
 
-	//c.wait = make(chan *pb.Protocol, 1)
-	c.wait = make(chan *pb.Protocol, 3)
+	c.wait = make(chan *pb.Protocol, 1)
 
 	c.closed = false
 
@@ -58,8 +54,6 @@ func newConn(client *Client) (*Conn, error) {
 
 func (c *Conn) Close() {
 	c.unbindAll()
-
-	c.client.pushConn(c)
 }
 
 func (c *Conn) keepAlive() {
@@ -83,35 +77,35 @@ func (c *Conn) keepAlive() {
 }
 
 func (c *Conn) close() {
-	c.conn.Close()
+	c.sockConn.Close()
 	c.closed = true
 }
 
 func (c *Conn) run() {
+
 	defer func() {
-		c.conn.Close()
-
+		c.sockConn.Close()
 		close(c.wait)
-
 		c.closed = true
 	}()
 
 	allbuf := make([]byte, 0)
 	buffer := make([]byte, 1024)
+
 	for {
-		readLen, err := c.conn.Read(buffer)
+		readLen, err := c.sockConn.Read(buffer)
 
 		if err == io.EOF {
-			log.Infof("Client %s close connection", c.conn.RemoteAddr().String())
+			log.Infof("Client %s close connection", c.sockConn.RemoteAddr().String())
 			return
 		}
 
 		if err != nil {
-			log.Errorf("Read Data from client:%s err:%s", c.conn.RemoteAddr().String(), err.Error())
+			log.Errorf("Read Data from client:%s err:%s", c.sockConn.RemoteAddr().String(), err.Error())
 			return
 		}
+
 		allbuf = append(allbuf, buffer[:readLen]...)
-		//log.Infof("Read data from client:%s length:%d", c.conn.RemoteAddr().String(), readLen)
 
 		for {
 			p := &pb.Protocol{}
@@ -172,7 +166,7 @@ func (c *Conn) writeProtocol(p *pb.Protocol) error {
 		return err
 	}
 	c.writeLock.Lock()
-	n, err := c.conn.Write(buf)
+	n, err := c.sockConn.Write(buf)
 	c.writeLock.Unlock()
 
 	if err != nil {
@@ -291,86 +285,4 @@ func (c *Conn) ack(queue string, msgId string) error {
 	}
 
 	return c.writeProtocol(p)
-}
-
-var ErrChannelClosed = errors.New("channel has been closed")
-
-type channelMsg struct {
-	ID   string
-	Body []byte
-}
-
-type Channel struct {
-	c          *Conn
-	queue      string
-	routingKey string
-	ack        bool
-
-	msg    chan *channelMsg
-	closed bool
-
-	lastId string
-}
-
-func newChannel(c *Conn, queue string, routingKey string, ack bool) *Channel {
-	ch := new(Channel)
-
-	ch.c = c
-	ch.queue = queue
-	ch.routingKey = routingKey
-	ch.ack = ack
-
-	ch.msg = make(chan *channelMsg, c.cfg.MaxQueueSize)
-
-	ch.closed = false
-	return ch
-}
-
-func (c *Channel) Close() error {
-	c.closed = true
-
-	return c.c.unbind(c.queue)
-}
-
-func (c *Channel) Ack() error {
-	if c.closed {
-		return ErrChannelClosed
-	}
-
-	return c.c.ack(c.queue, c.lastId)
-}
-
-func (c *Channel) GetMsg() []byte {
-	if c.closed && len(c.msg) == 0 {
-		return nil
-	}
-
-	msg := <-c.msg
-	c.lastId = msg.ID
-	return msg.Body
-}
-
-func (c *Channel) WaitMsg(d time.Duration) []byte {
-	if c.closed && len(c.msg) == 0 {
-		return nil
-	}
-
-	select {
-	case <-time.After(d):
-		return nil
-	case msg := <-c.msg:
-		c.lastId = msg.ID
-		return msg.Body
-	}
-}
-
-func (c *Channel) pushMsg(msgId string, body []byte) {
-	for {
-		select {
-		case c.msg <- &channelMsg{msgId, body}:
-			return
-		default:
-			<-c.msg
-		}
-	}
 }

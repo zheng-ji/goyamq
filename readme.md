@@ -6,14 +6,18 @@ Yet Another Message Queue Base On Protobuffer
 
 ## Install
 
+如果你使用的版本 >= 1.11, 可以使用 `go mod download`, 亦或者
+
 ```
 go get gopkg.in/yaml.v3
 go get github.com/sirupsen/logrus
 go get github.com/golang/protobuf/proto
 ```
 
+
 ## TODO List
 
+- [x] 使用 go mod
 - [x] 用 Yaml 做配置文件
 - [x] 规范 ProtoBuf 协议
 - [x] 服务化

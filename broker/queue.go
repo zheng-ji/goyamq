@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"sync"
 	"time"
 )
 
@@ -95,8 +94,7 @@ func (rq *queue) Unbind(c *channel) {
 					delete(rq.waitingAcks, c)
 
 					if len(rq.waitingAcks) == 0 {
-						//all waiting conn not send ack
-						//repush
+						//all waiting conn not send ack, repush
 						repush = true
 					}
 				}
@@ -277,52 +275,4 @@ func (rq *queue) pushFanout(m *msg) error {
 	}
 
 	return fmt.Errorf("push fanout error")
-}
-
-type queues struct {
-	sync.RWMutex
-	app *App
-
-	qs map[string]*queue
-}
-
-func newQueues(app *App) *queues {
-	qs := new(queues)
-
-	qs.app = app
-	qs.qs = make(map[string]*queue)
-
-	return qs
-}
-
-func (qs *queues) Get(name string) *queue {
-	qs.Lock()
-	if r, ok := qs.qs[name]; ok {
-		qs.Unlock()
-		return r
-	} else {
-		r := newQueue(qs, name)
-		qs.qs[name] = r
-		qs.Unlock()
-		return r
-	}
-}
-
-func (qs *queues) Getx(name string) *queue {
-	qs.RLock()
-	r, ok := qs.qs[name]
-	qs.RUnlock()
-
-	if ok {
-		return r
-	} else {
-		return nil
-	}
-
-}
-
-func (qs *queues) Delete(name string) {
-	qs.Lock()
-	delete(qs.qs, name)
-	qs.Unlock()
 }

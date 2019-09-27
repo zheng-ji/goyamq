@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"goyamq/pb"
 	"net"
 )
 
@@ -43,6 +44,36 @@ func NewApp(filepath string) (*App, error) {
 	}
 
 	return NewAppWithConfig(config)
+}
+
+func (app *App) saveMsg(queue string, routingKey string, tp string, message []byte) (*msg, error) {
+	var t uint8 = 0
+	if tp == pb.FanOut {
+		t = 1
+	}
+
+	if app.cfg.MaxQueueSize > 0 {
+		if n, err := app.ms.Len(queue); err != nil {
+			return nil, err
+		} else if n >= app.cfg.MaxQueueSize {
+			if err = app.ms.Pop(queue); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	id, err := app.ms.GenerateID()
+	if err != nil {
+		return nil, err
+	}
+
+	msg := newMsg(id, t, routingKey, message)
+
+	if err := app.ms.Save(queue, msg); err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }
 
 func (app *App) Close() {

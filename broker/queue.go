@@ -168,6 +168,7 @@ func (rq *queue) getMsg() (*msg, error) {
 
 func (rq *queue) push() {
 	if rq.lastPushId != -1 {
+		log.Info("rq.lastPushId != -1 return")
 		return
 	}
 

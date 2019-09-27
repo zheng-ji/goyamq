@@ -33,19 +33,6 @@ func (qs *queues) Get(name string) *queue {
 	}
 }
 
-func (qs *queues) Getx(name string) *queue {
-	qs.RLock()
-	r, ok := qs.qs[name]
-	qs.RUnlock()
-
-	if ok {
-		return r
-	} else {
-		return nil
-	}
-
-}
-
 func (qs *queues) Delete(name string) {
 	qs.Lock()
 	delete(qs.qs, name)
